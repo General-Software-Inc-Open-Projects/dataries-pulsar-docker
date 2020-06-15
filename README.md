@@ -53,39 +53,39 @@ Although Pulsar can start an internal zookeeper server when launched `standalone
 
 ### `ZOO_SERVERS`
 
-A comma separated list of `hostname:port` where the zookeper servers that will coordinate the Pulsar cluster are.
+> A comma separated list of `hostname:port` where the zookeper servers that will coordinate the Pulsar cluster are.
 
 ### `CONFIG_STORE_SERVERS`
 
-A comma separated list of `hostname:port` where the zookeper servers that will coordinate the whole Pulsar instance are. If you intend to deploy a single cluster you can use the same value of `ZOO_SERVERS`.
+> A comma separated list of `hostname:port` where the zookeper servers that will coordinate the whole Pulsar instance are. If you intend to deploy a single cluster you can use the same value of `ZOO_SERVERS`.
 
 The next variable will be important as well since it coordinates you cluster when launched along other clusters.  
 
 ### `CLUSTER_NAME`
 
-How you want to name you Pulsar cluster.
+> How you want to name you Pulsar cluster.
 
 Before runnig Pusar services, you must intialize some cluster metada in the external zookeeper server. So, one of your cluster's nodes must also set this variables. 
 
 ### `INITIALIZE_METADATA`
 
-Marks this container as the responsable of initializing you clusters metadata in the zookeeper servers.
+> Marks this container as the responsable of initializing you clusters metadata in the zookeeper servers.
 
 ### `METADATA_WEB_SERVICE_URL`
 
-Web URL of your cluster, by default we will use the container's `hostname` and the default port `8080`.
+> Web `URL` of your cluster, by default we will use the container's `hostname` and the default port `8080`.
 
 ### `METADATA_WEB_SERVICE_URL_TLS`
 
-Web URL with TLS of your cluster, by default we will use the container's `hostname` and the default port `8443`.
+> Web `URL` with TLS of your cluster, by default we will use the container's `hostname` and the default port `8443`.
 
 ### `METADATA_BROKER_SERVICE_URL`
 
-Broker URL of your cluster, by default we will use the container's `hostname` and the default port `6650`.
+> Broker `URL` of your cluster, by default we will use the container's `hostname` and the default port `6650`.
 
 ### `METADATA_BROKER_SERVICE_URL_TLS`
 
-Broker URL with TLS of your cluster, by default we will use the container's `hostname` and the default port `6651`.
+> Broker `URL` with TLS of your cluster, by default we will use the container's `hostname` and the default port `6651`.
 
 Example using `docker-compose`:
 
@@ -234,18 +234,17 @@ To use Pulsar's connectors you must first configure the next parameters on all t
     CONF_BROKER_functionsWorkerEnabled=true
     YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=`cluster's name`
 
-Each function worker assigned to run a connector will then search under the `connectors` folder for the connectors files. You can either bind a local volume with the connectors you want or set the next environment variable:
+Each function worker assigned by Pulsar to run a specific connector will search the connector's file under the `connectors` folder. You can either bind a local volume with the connectors you want or set the next environment variable:
 
 ### `CONNECTORS_URL`
 
-A space separated list of URLs pointing to the connectors files you want to download into the `connectors` folder. 
+> A space separated list of `URL`s pointing to the connectors files you want to download into the `connectors` folder. 
 
-You will also need a configuration YAML, with options and parameters as requiered by each connector, inside the container that will launch the connector only. So, bind a local volume with the YAML file inside the `/home/pulsar/` folder.
+You will also need a configuration `YAML`, with options and parameters as requiered by each connector, inside the container that will launch the connector. So, bind a local volume with the `YAML` file inside the `/home/pulsar/` folder.
 
-Let's see a full example of how a `docker-compose.yml` would look like if you want to run the Cassandra sink connector example:
+Let's see a full example of how a `docker-compose.yml` would look like if you want to run the [Cassandra example](https://pulsar.apache.org/docs/en/io-quickstart/#connect-pulsar-to-cassandra):
 
 ~~~yaml
-
   # (Previous configuration remains untouched)
 
   pulsar-1:
@@ -259,8 +258,8 @@ Let's see a full example of how a `docker-compose.yml` would look like if you wa
       - INITIALIZE_METADATA=true
       - CONF_BROKER_functionsWorkerEnabled=true
       - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
-      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
-    command: "pulsar-admin sinks create --tenant public --namespace default --name cassandra-test-sink --sink-type cassandra --sink-config-file /home/pulsar/cassandra-sink.yml --inputs test_cassandra && tail -f /dev/null"
+      - CONNECTORS_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+    command: "/bin/bash -c 'pulsar-admin sinks create --tenant public --namespace default --name cassandra-test-sink --sink-type cassandra --sink-config-file /home/pulsar/cassandra-sink.yml --inputs test_cassandra && tail -f /dev/null'"
     volumes:
       - /path/to/cassandra-sink.yml:/home/pulsar/cassandra-sink.yml
     depends_on:
@@ -282,7 +281,7 @@ Let's see a full example of how a `docker-compose.yml` would look like if you wa
       - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
       - CONF_BROKER_functionsWorkerEnabled=true
       - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
-      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+      - CONNECTORS_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
     depends_on:
       - pulsar-1
     restart: on-failure
@@ -300,7 +299,7 @@ Let's see a full example of how a `docker-compose.yml` would look like if you wa
       - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
       - CONF_BROKER_functionsWorkerEnabled=true
       - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
-      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+      - CONNECTORS_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
     depends_on:
       - pulsar-1
     restart: on-failure
