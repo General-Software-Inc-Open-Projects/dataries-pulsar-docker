@@ -1,69 +1,91 @@
 # Description
 
-This image was created with the intention of adding extra configuration options to the deployment of Apache Zookeeper component on Docker. We are not associated with Apache or Zookeeper in anyway. You can find the official docker image [here](https://hub.docker.com/r/_/zookeeper).
+This image was created with the intention of adding extra configuration options to the deployment of Apache Pulsar component on Docker. We are not associated with Apache or Pulsar in anyway. You can find the official image [here](https://hub.docker.com/r/apachepulsar/pulsar).
 
 # Quick reference
 
-- Maintained by: [General Software Inc Open Projects](https://github.com/General-Software-Inc-Open-Projects/dataries-zookeeper-docker)
-- Where to file issues: [GitHub Issues](https://github.com/General-Software-Inc-Open-Projects/dataries-zookeeper-docker/issues)
+- Maintained by: [General Software Inc Open Projects](https://github.com/General-Software-Inc-Open-Projects/pulsar-docker)
+- Where to file issues: [GitHub Issues](https://github.com/General-Software-Inc-Open-Projects/pulsar-docker/issues)
 
-# What is Apache Zookeeper?
+# What is Apache Pulsar?
 
-[Apache ZooKeeper](https://zookeeper.apache.org/) is a software project of the Apache Software Foundation, providing an open source distributed configuration service, synchronization service, and naming registry for large distributed systems. ZooKeeper was a sub-project of Hadoop but is now a top-level project in its own right.
+[Apache Pulsar](https://pulsar.apache.org/)  is a highly scalable, low latency messaging platform running on commodity hardware. It provides simple pub-sub semantics over topics, guaranteed at-least-once delivery of messages, automatic cursor management for subscribers, and cross-datacenter replication.
 
 # How to use this image
 
-## Start a single node Zookeeper server
+## Start a single node Pulsar server
 
 ~~~bash
-docker run -itd --name zookeeper -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
+docker run -itd --name pulsar -e "STANDALONE=true" -p 8080:8080 -p 6650:6650 -p 8443:8443 -p 6651:6651 --restart on-failure gsiopen/pulsar:2.5.2
 ~~~
 
 ## Persist data
 
-> This image is runned using a non root user `zookeeper` who owns the `/opt/zookeeper` folder.
+> This image is runned using a non root user `pulsar` who owns the `/opt/pulsar` folder.
 
-By default, zookeeper's data and datalog are stored in `/opt/zookeeper/data` and `/opt/zookeeper/datalog`. You can bind local volumes to each as follows:
+By default, pulsar's data is stored in `/opt/pulsar/data`. You can bind a local volume as follows:
 
 ~~~bash
-docker run -itd --name zookeeper -v /path/to/store/data:/opt/zookeeper/data -v /path/to/store/datalog:/opt/zookeeper/datalog -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
+docker run -itd --name pulsar -v /path/to/store/data:/opt/pulsar/data -e "STANDALONE=true" -p 8080:8080 -p 6650:6650 -p 8443:8443 -p 6651:6651 --restart on-failure gsiopen/pulsar:2.5.2
 ~~~
  
-## Connect to Zookeeper from the command line client
+## Connect to Pulsar from the command line client
+
+All `CLI` scripts are contained in `PATH`, so you can invoke them using their respective commands and arguments as follows: 
 
 ~~~bash
-docker exec -it zookeeper zkCli.sh
+docker exec -it pulsar pulsar-admin brokers healthcheck
 ~~~
 
 ## Logging
 
-By default, ZooKeeper redirects stdout/stderr outputs to the console so you can run the next command to find logs:
+You can find out if something went wrong while initializing the container using the next command:
 
 ~~~bash
-docker logs zookeeper
+docker logs pulsar
 ~~~
 
-However you can redirect logs to files in `/opt/zookeeper/logs` by passing the environment variable ZOO_LOG4J_PROP as follows:
-
-~~~bash
-docker run -itd --name zookeeper -e ZOO_LOG4J_PROP="INFO,ROLLINGFILE" -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
-~~~
-
-Check [ZooKeeper Logging](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_logging) for more details.
+The rest can be found in the `logs` folder with format `pulsar-[service]-[hostname].log` 
 
 # Deploy a cluster
 
-Environment variables below are mandatory if you want to run Zookeeper in replicated mode.
-
-### `ZOO_MY_ID`
-
-The id must be unique within the ensemble and should have a value between 1 and 255.
+Although Pulsar can start an internal zookeeper server when launched `standalone`, the recommendend deployment for Pulsar cluster is to use an external zookeeper cluster. Therefore, the environment variables below are mandatory to indicate where the zookeeper servers are.
 
 ### `ZOO_SERVERS`
 
-This variable allows you to specify a list of machines of the Zookeeper ensemble. Each entry has the form of `server.id=<address1>:<port1>:<port2>[:role];[<client port address>:]<client port>` and are separated by spaces.
+A comma separated list of `hostname:port` where the zookeper servers that will coordinate the Pulsar cluster are.
 
-Check [Zookeeper Dynamic Reconfiguration](https://zookeeper.apache.org/doc/current/zookeeperReconfig.html) for more details.
+### `CONFIG_STORE_SERVERS`
+
+A comma separated list of `hostname:port` where the zookeper servers that will coordinate the whole Pulsar instance are. If you intend to deploy a single cluster you can use the same value of `ZOO_SERVERS`.
+
+The next variable will be important as well since it coordinates you cluster when launched along other clusters.  
+
+### `CLUSTER_NAME`
+
+How you want to name you Pulsar cluster.
+
+Before runnig Pusar services, you must intialize some cluster metada in the external zookeeper server. So, one of your cluster's nodes must also set this variables. 
+
+### `INITIALIZE_METADATA`
+
+Marks this container as the responsable of initializing you clusters metadata in the zookeeper servers.
+
+### `METADATA_WEB_SERVICE_URL`
+
+Web URL of your cluster, by default we will use the container's `hostname` and the default port `8080`.
+
+### `METADATA_WEB_SERVICE_URL_TLS`
+
+Web URL with TLS of your cluster, by default we will use the container's `hostname` and the default port `8443`.
+
+### `METADATA_BROKER_SERVICE_URL`
+
+Broker URL of your cluster, by default we will use the container's `hostname` and the default port `6650`.
+
+### `METADATA_BROKER_SERVICE_URL_TLS`
+
+Broker URL with TLS of your cluster, by default we will use the container's `hostname` and the default port `6651`.
 
 Example using `docker-compose`:
 
@@ -115,25 +137,83 @@ services:
     networks:
       private-net:
         ipv4_address: 192.168.1.4
+
+  pulsar-1:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-1
+    hostname: pulsar-1
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - INITIALIZE_METADATA=true
+    depends_on:
+      - zoo-1
+      - zoo-2
+      - zoo-3
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.5
+
+  pulsar-2:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-2
+    hostname: pulsar-2
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+    depends_on:
+      - pulsar-1
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.6
+
+  pulsar-3:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-3
+    hostname: pulsar-3
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+    depends_on:
+      - pulsar-1
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.7
 ~~~
 
 # Configuration
 
 ## Volumes
 
-Zookeeper uses default configuration files in the `/opt/zookeeper/conf` folder. You can bind an external folder with your configuration files as follows:
+Pulsar uses default configuration files in the `/opt/pulsar/conf` folder. You can bind an external folder with your configuration files as follows:
 
 ~~~bash
-docker run -itd --name zookeeper -v /path/to/conf:/opt/zookeeper/conf -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
+docker run -itd --name pulsar -v /path/to/store/conf:/opt/pulsar/conf -e "STANDALONE=true" -p 8080:8080 -p 6650:6650 -p 8443:8443 -p 6651:6651 --restart on-failure gsiopen/pulsar:2.5.2
 ~~~
 
 ## Environment variables
 
 The environment configuration is controlled via the following environment variable groups or PREFIX:
 
-    CONF_ZOO: affects zoo.cfg
-    CONF_LOG4J: affects log4j.properties
+    CONF_ZOO: affects zookeeper.conf
+    CONF_GLOBAL_ZOO: affects global_zookeeper.conf
+    CONF_BOOKKEEPER: affects bookkeeper.conf
+    CONF_BROKER: affects broker.conf
+    CONF_CLIENT: affects client.conf
+    CONF_DISCOVERY: affects discovery.conf
+    CONF_PROXY: affects proxy.conf
+    CONF_WEBSOCKET: affects websocket.conf
+    CONF_STANDALONE: affects standalone.conf
     
+    YAML_LOG4J2: affects log4j2.yml
+    YAML_FUNCTIONS_WORKER: affects functions_worker.yml
+
 Set environment variables with the appropriated group in the form PREFIX_PROPERTY.
 
 Due to restriction imposed by docker and docker-compose on environment variable names the following substitution are applied to PROPERTY names:
@@ -144,28 +224,16 @@ Due to restriction imposed by docker and docker-compose on environment variable 
 
 Following are some illustratory examples:
 
-    CONF_ZOO_dataLogDir=/opt/zookeeper/datalog: sets the dataLogDir property in zoo.cfg
-    CONF_ZOO_admin_enableServer=true: sets the admin.enableServer property in zoo.cfg
-    
-## Java
+    CONF_BROKER_functionsWorkerEnabled=true: sets the functionsWorkerEnabled property in broker.conf
+    YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar: sets the pulsarFunctionsCluster property in functions_worker.yml
 
-Another option would be using `JVMFLAGS` environment variable. Many of the Zookeeper advanced configuration options can be set there using Java system properties in the form of `-Dproperty=value`. For example, you can use Netty instead of NIO (default option) as a server communication framework:
+# Connectors
 
-~~~bash
-docker run -itd --name zookeeper -e JVMFLAGS="-Dzookeeper.serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory" -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
-~~~
-
-See [Advanced Configuration](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_advancedConfiguration) for the full list of supported Java system properties.
-
-Another example use case for the JVMFLAGS is setting a maximum JVM heap size of 1 GB:
-
-~~~bash
-docker run -itd --name zookeeper -e JVMFLAGS="-Xmx1024m" -p 2181:2181 -p 2888:2888 -p 3888:3888 -p 8080:8080 --restart on-failure gsiopen/zookeeper:3.6.1
-~~~
+Building.
 
 # License
 
-View [license information](https://github.com/apache/zookeeper/blob/master/LICENSE.txt) for the software contained in this image.
+View [license information](https://github.com/apache/pulsar/blob/master/LICENSE) for the software contained in this image.
 
 As with all Docker images, these likely also contain other software which may be under other licenses (such as Bash, etc from the base distribution, along with any direct or indirect dependencies of the primary software being contained).
 
