@@ -84,6 +84,7 @@ configure "$config/functions_worker.yml" "YAML_FUNCTIONS_WORKER" ": "
 
 # Download connectors
 if [[ ! -z $CONNECTORS_URL ]]; then
+    echo "Downloading connectors..."
     mkdir -p $PULSAR_HOME/connectors
     for url in $CONNECTORS_URL; do
         (cd $PULSAR_HOME/connectors && curl -LO $url)

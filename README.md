@@ -229,7 +229,86 @@ Following are some illustratory examples:
 
 # Connectors
 
-Building.
+To use Pulsar's connectors you must first configure the next parameters on all the nodes you want to participate as function workers.
+
+    CONF_BROKER_functionsWorkerEnabled=true
+    YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=`cluster's name`
+
+Each function worker assigned to run a connector will then search under the `connectors` folder for the connectors files. You can either bind a local volume with the connectors you want or set the next environment variable:
+
+### `CONNECTORS_URL`
+
+A space separated list of URLs pointing to the connectors files you want to download into the `connectors` folder. 
+
+You will also need a configuration YAML, with options and parameters as requiered by each connector, inside the container that will launch the connector only. So, bind a local volume with the YAML file inside the `/home/pulsar/` folder.
+
+Let's see a full example of how a `docker-compose.yml` would look like if you want to run the Cassandra sink connector example:
+
+~~~yaml
+
+  # (Previous configuration remains untouched)
+
+  pulsar-1:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-1
+    hostname: pulsar-1
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - INITIALIZE_METADATA=true
+      - CONF_BROKER_functionsWorkerEnabled=true
+      - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
+      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+    command: "pulsar-admin sinks create --tenant public --namespace default --name cassandra-test-sink --sink-type cassandra --sink-config-file /home/pulsar/cassandra-sink.yml --inputs test_cassandra && tail -f /dev/null"
+    volumes:
+      - /path/to/cassandra-sink.yml:/home/pulsar/cassandra-sink.yml
+    depends_on:
+      - zoo-1
+      - zoo-2
+      - zoo-3
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.5
+
+  pulsar-2:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-2
+    hostname: pulsar-2
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONF_BROKER_functionsWorkerEnabled=true
+      - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
+      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+    depends_on:
+      - pulsar-1
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.6
+
+  pulsar-3:
+    image: gsiopen/pulsar:2.5.2
+    container_name: pulsar-3
+    hostname: pulsar-3
+    environment:
+      - CLUSTER_NAME=pulsar
+      - ZOO_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONFIG_STORE_SERVERS=zoo-1:2181,zoo-2:2181,zoo-3:2181
+      - CONF_BROKER_functionsWorkerEnabled=true
+      - YAML_FUNCTIONS_WORKER_pulsarFunctionsCluster=pulsar
+      - DOWNLOAD_URL=https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.5.2/connectors/pulsar-io-cassandra-2.5.2.nar
+    depends_on:
+      - pulsar-1
+    restart: on-failure
+    networks:
+      private-net:
+        ipv4_address: 192.168.1.7
+~~~
+
 
 # License
 
