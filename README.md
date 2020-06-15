@@ -308,6 +308,7 @@ Let's see a full example of how a `docker-compose.yml` would look like if you wa
         ipv4_address: 192.168.1.7
 ~~~
 
+> Notice the use of `command` to submit the sink connector as soon as the broker is ready, add `tail -f /dev/null` to maintain the container runnig. 
 
 # License
 
