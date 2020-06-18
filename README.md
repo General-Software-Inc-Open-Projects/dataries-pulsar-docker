@@ -194,7 +194,7 @@ services:
 Pulsar uses default configuration files in the `/opt/pulsar/conf` folder. You can bind an external folder with your configuration files as follows:
 
 ~~~bash
-docker run -itd --name pulsar -v /path/to/store/conf:/opt/pulsar/conf -e "STANDALONE=true" -p 8080:8080 -p 6650:6650 -p 8443:8443 -p 6651:6651 --restart on-failure gsiopen/pulsar:2.5.2
+docker run -itd --name pulsar -v /path/to/conf:/opt/pulsar/conf -e "STANDALONE=true" -p 8080:8080 -p 6650:6650 -p 8443:8443 -p 6651:6651 --restart on-failure gsiopen/pulsar:2.5.2
 ~~~
 
 ## Environment variables
