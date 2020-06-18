@@ -4,8 +4,8 @@ This image was created with the intention of adding extra configuration options 
 
 # Quick reference
 
-- Maintained by: [General Software Inc Open Projects](https://github.com/General-Software-Inc-Open-Projects/pulsar-docker)
-- Where to file issues: [GitHub Issues](https://github.com/General-Software-Inc-Open-Projects/pulsar-docker/issues)
+- Maintained by: [General Software Inc Open Projects](https://github.com/General-Software-Inc-Open-Projects/dataries-pulsar-docker)
+- Where to file issues: [GitHub Issues](https://github.com/General-Software-Inc-Open-Projects/dataries-pulsar-docker/issues)
 
 # What is Apache Pulsar?
 
